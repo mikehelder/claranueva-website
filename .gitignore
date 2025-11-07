@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Dependencies
+node_modules/
+/ai-worker/node_modules/
+
+# Wrangler
+.wrangler/
+/ai-worker/.wrangler/
+
+# Additional recommended ignores for Node.js projects
+.env
+.env.local
+.env.*.local
+.DS_Store

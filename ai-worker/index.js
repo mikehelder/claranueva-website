@@ -47,10 +47,9 @@ async function handleRequest(request, env) {
         // 1. Parse the incoming FormData
         const formData = await request.formData();
         const imageFile = formData.get('image');
-        const prompt = formData.get('prompt');
 
-        if (!imageFile || !prompt) {
-            return createCORSResponse({ error: 'Missing image file or prompt in request.' }, 400, origin);
+        if (!imageFile || !(imageFile instanceof File)) {
+            return createCORSResponse({ error: 'Missing image file in request.' }, 400, origin);
         }
 
         if (imageFile.size === 0) {
@@ -66,7 +65,7 @@ async function handleRequest(request, env) {
         const aiResponse = await env.AI.run(
             MODEL,
             {
-                prompt: `Recognize all text in the image and then provide a detailed interpretation of the entire content based on the following instruction: ${prompt}`,
+                prompt: `This is an ayurvedic recipe written in english. Convert to text and create an ayurvedic recipe with section for ingredients and for preparation method. Also explain for which dosha this recipe is beneficial and why.`,
                 image: imageArray,
             }
         );

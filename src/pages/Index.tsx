@@ -6,6 +6,7 @@ import RecipeDisplay from '@/components/RecipeDisplay';
 import Visualization from '@/components/Visualization';
 import { FileWithPreview, Recipe } from '@/types';
 import { extractTextFromImage } from '@/utils/textExtraction';
+import { log, error as dbgError } from '@/lib/debug';
 import { emptyRecipe } from '@/utils/mockData';
 import { Separator } from "@/components/ui/separator";
 
@@ -15,13 +16,16 @@ const Index = () => {
   const [recipe, setRecipe] = useState<Recipe>(emptyRecipe);
 
   const handleImageUpload = async (file: FileWithPreview) => {
+    log('📌 [Index] Image upload triggered:', file.name);
     setUploadedImage(file);
     setIsProcessing(true);
     try {
+      log('📌 [Index] Calling extractTextFromImage...');
       const extractedRecipe = await extractTextFromImage(file);
+      log('📌 [Index] Extraction complete, setting recipe:', extractedRecipe.title);
       setRecipe(extractedRecipe);
     } catch (error) {
-      console.error('Error extracting text:', error);
+      dbgError('Error extracting text:', error);
     } finally {
       setIsProcessing(false);
     }

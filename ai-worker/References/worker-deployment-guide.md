@@ -36,9 +36,8 @@ This will run the worker, typically at `http://127.0.0.1:8787`.
 
 ### B. Test with a Local Image
 
-The Worker expects a POST request with a `multipart/form-data` body containing two fields:
+The Worker expects a POST request with a `multipart/form-data` body containing one field:
 - `image` (the file data)
-- `prompt` (the instruction text)
 
 #### i. Using cURL (Linux/macOS/Git Bash)
 
@@ -48,7 +47,6 @@ Use the `-F` flag for form-data and specify the file path using `@`:
 # Ensure the worker is running locally at 8787
 curl -X POST \
   -F "image=@/path/to/your/document.png" \
-  -F "prompt=What is the date and total cost displayed in this image?" \
   http://127.0.0.1:8787
 ```
 

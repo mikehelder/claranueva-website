@@ -6,8 +6,8 @@ import { log, error as dbgError, warn as dbgWarn } from '@/lib/debug';
 // This function now calls the Cloudflare Worker to extract/interpret
 // the image using AI. If the worker fails, it falls back to sampleRecipe.
 export const extractTextFromImage = async (file: FileWithPreview): Promise<Recipe> => {
-  // Use Vite env variable (set VITE_WORKER_URL in .env) or default to local dev worker
-  const WORKER_URL = (import.meta as any).env?.VITE_WORKER_URL || 'http://127.0.0.1:8787';
+  // Use Vite env variable (set VITE_WORKER_URL in .env) or default url from deployed worker AI
+  const WORKER_URL = (import.meta as any).env?.VITE_WORKER_URL || 'https://multimodal-vision-ocr-worker.mikevandenhelder.workers.dev';
 
   log('🚀 Starting image extraction...');
   log(`📤 Worker URL: ${WORKER_URL}`);

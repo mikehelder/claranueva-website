@@ -8,4 +8,4 @@ binding = "AI"
 
 # Environment variable to store the allowed origin (your Cloudflare Pages URL)
 [vars]
-ALLOWED_ORIGIN = "https://your-pages-domain.pages.dev" # REPLACE with your actual Pages domain or "https://yourdomain.com" if using a custom domain
+ALLOWED_ORIGIN = "http://localhost:8080" # REPLACE with your actual Pages domain or "https://yourdomain.com" if using a custom domain

@@ -28,8 +28,7 @@ Navigate to the ai-worker directory (where `wrangler.toml` is located) and run t
 
 ```bash
 cd ai-worker
-npm start
-# or if you installed globally:
+
 wrangler dev
 ```
 
@@ -52,19 +51,6 @@ curl -X POST \
   -F "prompt=What is the date and total cost displayed in this image?" \
   http://127.0.0.1:8787
 ```
-
-#### ii. Using Postman or Insomnia
-
-1. Set the request method to POST
-2. Set the request URL to `http://127.0.0.1:8787`
-3. Go to the Body tab and select form-data
-4. Add a key named `image`
-   - In the dropdown next to the key, change the type from Text to File
-   - Select your local image file
-5. Add a second key named `prompt`
-   - Keep the type as Text
-   - Enter your interpretation query (e.g., "Summarize the key points of the receipt.")
-6. Click Send
 
 **Recommended Test**: Use the frontend code provided in the index.html file below, but change the `WORKER_URL` to `http://127.0.0.1:8787` for local testing.
 

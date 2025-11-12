@@ -15,10 +15,13 @@ const Index = () => {
   const [recipe, setRecipe] = useState<Recipe>(emptyRecipe);
 
   const handleImageUpload = async (file: FileWithPreview) => {
+    console.log('📌 [Index] Image upload triggered:', file.name);
     setUploadedImage(file);
     setIsProcessing(true);
     try {
+      console.log('📌 [Index] Calling extractTextFromImage...');
       const extractedRecipe = await extractTextFromImage(file);
+      console.log('📌 [Index] Extraction complete, setting recipe:', extractedRecipe.title);
       setRecipe(extractedRecipe);
     } catch (error) {
       console.error('Error extracting text:', error);

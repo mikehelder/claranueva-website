@@ -13,7 +13,7 @@ interface RecipeUploaderProps {
 const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProcessing }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
-  
+
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -27,7 +27,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       handleFile(file);
@@ -42,8 +42,10 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
   };
 
   const handleFile = (file: File) => {
+    console.log('📌 [RecipeUploader] File selected:', file.name, file.type);
     // Check if the file is an image
     if (!file.type.match('image.*')) {
+      console.warn('❌ [RecipeUploader] Invalid file type:', file.type);
       toast({
         title: "Invalid file type",
         description: "Please upload an image file (JPEG, PNG, etc.).",
@@ -51,14 +53,15 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
       });
       return;
     }
-    
+
     // Add preview URL to the file
     const fileWithPreview = Object.assign(file, {
       preview: URL.createObjectURL(file)
     }) as FileWithPreview;
-    
+
+    console.log('✅ [RecipeUploader] Calling onImageUploaded with:', fileWithPreview.name);
     onImageUploaded(fileWithPreview);
-    
+
     toast({
       title: "Image uploaded",
       description: "Your recipe image has been uploaded successfully.",
@@ -79,7 +82,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
           <p className="text-center text-muted-foreground mb-6">
             Drag and drop your handwritten Sanskrit recipe, or click to browse
           </p>
-          
+
           <div className="flex gap-4">
             <Button
               onClick={() => document.getElementById('file-upload')?.click()}
@@ -88,7 +91,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
             >
               <FileText className="mr-2 h-4 w-4" /> Choose File
             </Button>
-            
+
             <Button
               variant="outline"
               className="border-ayurveda-terra text-ayurveda-terra hover:bg-ayurveda-terra/10"
@@ -98,7 +101,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
               <Image className="mr-2 h-4 w-4" /> Use Sample
             </Button>
           </div>
-          
+
           <input
             type="file"
             id="file-upload"
@@ -107,7 +110,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
             onChange={handleFileChange}
             disabled={isProcessing}
           />
-          
+
           <button
             id="sample-image"
             className="hidden"
@@ -121,7 +124,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
                 });
             }}
           />
-          
+
           <div className="mt-4 text-sm text-muted-foreground">
             {isProcessing ? (
               <div className="flex items-center">

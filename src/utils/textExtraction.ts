@@ -1,6 +1,7 @@
 
 import { Recipe, FileWithPreview } from '../types';
 import { sampleRecipe } from './mockData';
+import { log, error as dbgError, warn as dbgWarn } from '@/lib/debug';
 
 // This function now calls the Cloudflare Worker to extract/interpret
 // the image using AI. If the worker fails, it falls back to sampleRecipe.
@@ -8,9 +9,9 @@ export const extractTextFromImage = async (file: FileWithPreview): Promise<Recip
   // Use Vite env variable (set VITE_WORKER_URL in .env) or default to local dev worker
   const WORKER_URL = (import.meta as any).env?.VITE_WORKER_URL || 'http://127.0.0.1:8787';
 
-  console.log('🚀 Starting image extraction...');
-  console.log(`📤 Worker URL: ${WORKER_URL}`);
-  console.log(`📄 File: ${file.name} (${file.size} bytes)`);
+  log('🚀 Starting image extraction...');
+  log(`📤 Worker URL: ${WORKER_URL}`);
+  log(`📄 File: ${file.name} (${file.size} bytes)`);
 
   // Build the multipart form payload
   const form = new FormData();
@@ -19,33 +20,33 @@ export const extractTextFromImage = async (file: FileWithPreview): Promise<Recip
   form.append('prompt', 'Extract the recipe as structured text (title, ingredients, preparation, properties).');
 
   try {
-    console.log('📡 Sending POST request to worker...');
+    log('📡 Sending POST request to worker...');
     const resp = await fetch(WORKER_URL, {
       method: 'POST',
       body: form,
     });
 
-    console.log(`📊 Worker response status: ${resp.status} ${resp.statusText}`);
+    log(`📊 Worker response status: ${resp.status} ${resp.statusText}`);
 
     if (!resp.ok) {
-      console.error(`❌ Worker returned non-OK status: ${resp.status}`);
+      dbgError(`❌ Worker returned non-OK status: ${resp.status}`);
       const errorText = await resp.text();
-      console.error(`📋 Error response body: ${errorText}`);
+      dbgError(`📋 Error response body: ${errorText}`);
       throw new Error(`Worker error: ${resp.status}`);
     }
 
     const json = await resp.json();
-    console.log('✅ Worker response received:', json);
+    log('✅ Worker response received:', json);
 
     // The worker returns { result: <string> } on success in current implementation
     const text = (json?.result) ? String(json.result) : String(json || '');
 
     if (!text) {
-      console.error('❌ Empty response from worker');
+      dbgError('❌ Empty response from worker');
       throw new Error('Empty response from worker');
     }
 
-    console.log('📝 Raw text from worker:', text);
+    log('📝 Raw text from worker:', text);
 
     // Very small, defensive parser to fill the Recipe shape so the UI can render.
     //  - title: first non-empty line
@@ -67,7 +68,7 @@ export const extractTextFromImage = async (file: FileWithPreview): Promise<Recip
     const preparationCandidates = lines.filter(l => /^\d+\.|^step\b|^(mix|heat|boil|cook|simmer|stir)\b/i.test(l));
     const preparation = preparationCandidates.length > 0 ? preparationCandidates : [];
 
-    console.log('✨ Parsed recipe:', { title, ingredients: ingredients.length, preparation: preparation.length });
+    log('✨ Parsed recipe:', { title, ingredients: ingredients.length, preparation: preparation.length });
 
     const recipe: Recipe = {
       id: String(Date.now()),
@@ -83,15 +84,15 @@ export const extractTextFromImage = async (file: FileWithPreview): Promise<Recip
       },
     };
 
-    console.log('🎉 Successfully extracted recipe from worker');
+    log('🎉 Successfully extracted recipe from worker');
     return recipe;
   } catch (err) {
-    console.error('❌ Worker call failed:', err);
-    console.warn('⚠️  Falling back to sampleRecipe (mock data)');
+    dbgError('❌ Worker call failed:', err);
+    dbgWarn('⚠️  Falling back to sampleRecipe (mock data)');
     // Keep the existing mock behavior as a fallback so the app stays usable
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('📦 Returning mock sampleRecipe as fallback');
+        log('📦 Returning mock sampleRecipe as fallback');
         resolve(sampleRecipe);
       }, 500);
     });

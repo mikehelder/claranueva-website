@@ -1,6 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { FileWithPreview } from '../types';
+import { log, warn as dbgWarn } from '@/lib/debug';
 import { Button } from "@/components/ui/button";
 import { Upload, Image, FileText } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
@@ -42,10 +43,10 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
   };
 
   const handleFile = (file: File) => {
-    console.log('📌 [RecipeUploader] File selected:', file.name, file.type);
+    log('📌 [RecipeUploader] File selected:', file.name, file.type);
     // Check if the file is an image
     if (!file.type.match('image.*')) {
-      console.warn('❌ [RecipeUploader] Invalid file type:', file.type);
+      dbgWarn('❌ [RecipeUploader] Invalid file type:', file.type);
       toast({
         title: "Invalid file type",
         description: "Please upload an image file (JPEG, PNG, etc.).",
@@ -59,7 +60,7 @@ const RecipeUploader: React.FC<RecipeUploaderProps> = ({ onImageUploaded, isProc
       preview: URL.createObjectURL(file)
     }) as FileWithPreview;
 
-    console.log('✅ [RecipeUploader] Calling onImageUploaded with:', fileWithPreview.name);
+    log('✅ [RecipeUploader] Calling onImageUploaded with:', fileWithPreview.name);
     onImageUploaded(fileWithPreview);
 
     toast({

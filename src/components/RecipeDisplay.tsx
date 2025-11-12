@@ -12,7 +12,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
   if (!recipe.title) {
     return null;
   }
-  
+
   const getDoshaColor = (dosha: string) => {
     switch (dosha) {
       case 'vata': return 'bg-amber-700';
@@ -21,7 +21,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
       default: return 'bg-gray-600';
     }
   };
-  
+
   const getEffectColor = (effect?: string) => {
     switch (effect) {
       case 'increases': return 'text-red-600';
@@ -36,17 +36,9 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
       <div className="sanskrit-border inline-block mx-auto mb-6">
         <h2 className="text-3xl font-bold text-ayurveda-terra px-6 py-2">{recipe.title}</h2>
       </div>
-      
+
       <div className="flex flex-col lg:flex-row gap-8 max-w-5xl mx-auto">
-        {/* Original Text */}
-        <Card className="lg:w-1/3 bg-ayurveda-cream/30 p-6 border-ayurveda-wood/20">
-          <h3 className="text-xl font-medium mb-3 text-ayurveda-spice">Original Sanskrit</h3>
-          <div className="whitespace-pre-line font-serif text-lg leading-relaxed">
-            {recipe.originalText}
-          </div>
-        </Card>
-        
-        <div className="lg:w-2/3 space-y-6">
+        <div className="w-full space-y-6">
           {/* Properties */}
           <div className="flex flex-wrap gap-3 justify-center">
             <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-ayurveda-leaf/30">
@@ -56,7 +48,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
                 <span className="font-medium capitalize">{recipe.properties.primaryDosha}</span>
               </div>
             </div>
-            
+
             <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-ayurveda-leaf/30">
               <span className="text-sm text-gray-500">Potency</span>
               <div className="flex items-center mt-1">
@@ -64,7 +56,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
                 <span className="font-medium capitalize">{recipe.properties.potency}</span>
               </div>
             </div>
-            
+
             <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-ayurveda-leaf/30">
               <span className="text-sm text-gray-500">Tastes</span>
               <div className="flex items-center gap-1 mt-1 flex-wrap">
@@ -75,7 +67,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
                 ))}
               </div>
             </div>
-            
+
             <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-ayurveda-leaf/30">
               <span className="text-sm text-gray-500">Seasons</span>
               <div className="flex items-center gap-1 mt-1 flex-wrap">
@@ -87,7 +79,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
               </div>
             </div>
           </div>
-          
+
           {/* Ingredients */}
           <Card className="p-6">
             <h3 className="text-xl font-medium mb-4 text-ayurveda-terra">Ingredients</h3>
@@ -108,7 +100,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
               ))}
             </ul>
           </Card>
-          
+
           {/* Preparation */}
           <Card className="p-6">
             <h3 className="text-xl font-medium mb-4 text-ayurveda-terra">Preparation</h3>
@@ -119,6 +111,18 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
                 </li>
               ))}
             </ol>
+          </Card>
+
+          {/* Primary Dosha Explanation */}
+          <Card className="p-6 min-h-48">
+            <h3 className="text-xl font-medium mb-4 text-ayurveda-terra">Primary Dosha</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <span className={`h-4 w-4 rounded-full ${getDoshaColor(recipe.properties.primaryDosha)}`}></span>
+              <span className="text-lg font-medium capitalize">{recipe.properties.primaryDosha}</span>
+            </div>
+            {recipe.properties.doshaExplanation && (
+              <p className="text-foreground leading-relaxed">{recipe.properties.doshaExplanation}</p>
+            )}
           </Card>
         </div>
       </div>

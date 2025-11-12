@@ -19,6 +19,7 @@ export interface RecipeProperties {
   taste: Taste[];
   potency: 'hot' | 'cold';
   season: Season[];
+  doshaExplanation?: string;
 }
 
 export type Dosha = 'vata' | 'pitta' | 'kapha';

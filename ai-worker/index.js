@@ -65,7 +65,39 @@ async function handleRequest(request, env) {
         const aiResponse = await env.AI.run(
             MODEL,
             {
-                prompt: `This is an ayurvedic recipe written in english. Convert to text and create an ayurvedic recipe with section for ingredients and for preparation method. Also explain for which dosha this recipe is beneficial and why.`,
+                prompt: `Analyze this Ayurvedic recipe image and extract or deduce the following information:
+
+1. Recipe Title - extract from image if visible, otherwise deduce from ingredients
+2. Ingredients (with quantities if visible) - extract all ingredients you can identify
+3. Preparation Steps (numbered or bulleted) - extract all visible steps
+4. Primary Dosha (vata, pitta, or kapha) - the dosha this recipe is MOST beneficial for
+   - If not explicitly stated: deduce from the ingredients' properties using Ayurvedic knowledge
+   - Consider the tastes, thermal properties, and digestive qualities of the ingredients
+5. Tastes Present (list any of: sweet, sour, salty, pungent, bitter, astringent)
+   - If not explicitly listed: deduce the dominant tastes from the ingredients
+6. Potency (hot or cold)
+   - If not stated: deduce from the ingredients' thermal nature (e.g., ginger=hot, coconut=cool)
+7. Best Seasons (spring, summer, monsoon, autumn, winter) - one or more
+   - If not stated: deduce based on the recipe's potency and dosha properties
+8. Brief explanation of why this recipe is beneficial for the primary dosha
+
+IMPORTANT: Always provide values for ALL fields (1-8). If information is not visible in the image, 
+use your Ayurvedic knowledge to intelligently deduce the values based on:
+- The ingredients present and their known Ayurvedic properties
+- Common Ayurvedic cooking principles
+- The recipe's thermal and taste profile
+
+Format your response EXACTLY as follows (one field per line):
+TITLE: [recipe name]
+INGREDIENTS:
+[list each ingredient with quantity]
+PREPARATION:
+[list each step numbered]
+PRIMARY_DOSHA: [vata|pitta|kapha]
+TASTES: [comma-separated list from: sweet, sour, salty, pungent, bitter, astringent]
+POTENCY: [hot|cold]
+SEASONS: [comma-separated list from: spring, summer, monsoon, autumn, winter]
+DOSHA_EXPLANATION: [brief explanation of why this benefits the primary dosha]`,
                 image: imageArray,
             }
         );

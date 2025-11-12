@@ -48,27 +48,141 @@ export const extractTextFromImage = async (file: FileWithPreview): Promise<Recip
 
     log('📝 Raw text from worker:', text);
 
-    // Very small, defensive parser to fill the Recipe shape so the UI can render.
-    //  - title: first non-empty line
-    //  - originalText: full returned text
-    //  - ingredients: lines that look like ingredients (simple heuristic)
-    //  - preparation: numbered lines or lines after keywords like "Preparation" or "Method"
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    const title = lines.length > 0 ? lines[0] : 'Extracted Recipe';
+    // Parse the structured response from the worker
+    // Use a header-index approach: find the field label, then slice until the next field label.
+    const parseField = (fieldName: string): string => {
+      const headerRegex = new RegExp(`(?:\\*{1,2}\\s*)?${fieldName}\\s*:\\s*`, 'i');
+      const headerMatch = headerRegex.exec(text);
+      if (!headerMatch) return '';
+      const startIndex = headerMatch.index + headerMatch[0].length;
 
-    // Ingredients heuristic: lines that contain measurements or commas
-    const ingredientCandidates = lines.filter(l => /\b(cup|tsp|tbsp|tablespoon|teaspoon|gram|g|kg|ml|ounce|oz|pinch)\b|[,()]/i.test(l));
+      // Regex to find the next field header after the current header
+      const nextHeaderRegex = /\n\s*(?:\*{1,2}\s*)?(TITLE|INGREDIENTS|PREPARATION|PRIMARY_DOSHA|TASTES|POTENCY|SEASONS|DOSHA_EXPLANATION|DOSHA EXPLANATION|DOSHAEXPLANATION)\s*:/ig;
+      nextHeaderRegex.lastIndex = startIndex;
+      const nextMatch = nextHeaderRegex.exec(text);
+      const endIndex = nextMatch ? nextMatch.index : text.length;
+      return text.slice(startIndex, endIndex).trim();
+    };
 
-    const ingredients = ingredientCandidates.map((line, idx) => ({
-      name: line,
-      quantity: '',
-    }));
+    // Helper to clean leading markdown markers (e.g. "**" or "*") and whitespace
+    const cleanField = (s?: string) => (s ? String(s).replace(/^[\*\s]+/, '').trim() : '');
 
-    // Preparation heuristic: lines that start with digits or common verbs
-    const preparationCandidates = lines.filter(l => /^\d+\.|^step\b|^(mix|heat|boil|cook|simmer|stir)\b/i.test(l));
-    const preparation = preparationCandidates.length > 0 ? preparationCandidates : [];
+    const title = cleanField(parseField('TITLE')) || 'Extracted Recipe';
+    const ingredientsText = cleanField(parseField('INGREDIENTS'));
+    const preparationText = cleanField(parseField('PREPARATION'));
+    let primaryDoshaText = cleanField(parseField('PRIMARY_DOSHA')).toLowerCase().trim();
+    let tastesText = cleanField(parseField('TASTES'));
+    let potencyText = cleanField(parseField('POTENCY')).toLowerCase().trim();
+    let seasonsText = cleanField(parseField('SEASONS'));
+    // Try a few variations for the dosha explanation field (worker might use spaces or different naming)
+    let doshaExplanationText = cleanField(parseField('DOSHA_EXPLANATION') || parseField('DOSHA EXPLANATION') || parseField('DOSHAEXPLANATION'));
 
-    log('✨ Parsed recipe:', { title, ingredients: ingredients.length, preparation: preparation.length });
+    log('🔍 Raw parsed fields:', { primaryDoshaText, tastesText, potencyText, seasonsText, doshaExplanationText });
+
+    // Parse ingredients: prefer newline-separated list and strip leading bullets/markers.
+    const ingredientLines = ingredientsText
+      .split(/\r?\n+/)
+      .map(line => line.trim())
+      .map(line => line.replace(/^[\u2022\*\-\s]+/, '')) // remove bullets like '*', '•', '-' and leading spaces
+      .filter(Boolean);
+
+    const ingredients = ingredientLines.map((line) => {
+      // Try patterns in order: "name - qty", "name (qty)", "qty name", or fall back to full line
+      let m = line.match(/^(.*?)\s*[-–—]\s*(.+)$/);
+      if (m) return { name: m[1].trim(), quantity: m[2].trim() };
+
+      m = line.match(/^(.*?)\s*\(([^)]+)\)$/);
+      if (m) return { name: m[1].trim(), quantity: m[2].trim() };
+
+      m = line.match(/^([\d\/\.\s]*?(?:g|kg|ml|l|cup|cups|tsp|tbsp|tablespoon|tablespoons|teaspoon|teaspoons|pinch|clove|cloves|slice|slices)\b)\s+(.+)$/i);
+      if (m) return { name: m[2].trim(), quantity: m[1].trim() };
+
+      // Fallback: entire line is the ingredient name (no quantity)
+      return { name: line, quantity: '' };
+    });
+
+    // Parse preparation steps: split on blank lines or single newlines, preserve numbering order.
+    const prepLines = preparationText
+      .split(/\r?\n+/)
+      .map(line => line.trim())
+      .map(line => line.replace(/^[\u2022\*\-\s]+/, '')) // remove bullets
+      .map(line => line.replace(/^\d+\.\s*/, '')) // remove leading numbering
+      .filter(Boolean);
+
+    const preparation = prepLines.map(line => line.replace(/\s{2,}/g, ' '));
+
+    // Parse tastes - handle various formats
+    const validTastes = ['sweet', 'sour', 'salty', 'pungent', 'bitter', 'astringent'];
+    let tastes = tastesText
+      .split(/[,;]|and/)
+      .map(t => t.trim().toLowerCase())
+      .filter(t => validTastes.includes(t)) as any[];
+
+    // Parse dosha - normalize common variations
+    const validDoshas = ['vata', 'pitta', 'kapha'];
+    let primaryDosha = 'vata';
+    for (const dosha of validDoshas) {
+      if (primaryDoshaText.includes(dosha)) {
+        primaryDosha = dosha;
+        break;
+      }
+    }
+
+    // Parse potency - normalize hot/cold and warm/cool
+    let potency: 'hot' | 'cold' = 'hot';
+    if (potencyText.includes('cold') || potencyText.includes('cool')) {
+      potency = 'cold';
+    } else if (potencyText.includes('hot') || potencyText.includes('warm')) {
+      potency = 'hot';
+    }
+
+    // Parse seasons - handle various formats
+    const validSeasons = ['spring', 'summer', 'monsoon', 'autumn', 'winter'];
+    let seasons = seasonsText
+      .split(/[,;]|and/)
+      .map(s => s.trim().toLowerCase())
+      .filter(s => validSeasons.includes(s)) as any[];
+
+    // Intelligent fallback: if tastes are empty, try to deduce from ingredients
+    if (tastes.length === 0) {
+      log('⚠️  No tastes found, attempting to deduce from ingredients...');
+      // Common ingredient taste mappings
+      const ingredientTasteMap: { [key: string]: string[] } = {
+        'sweet': ['rice', 'wheat', 'ghee', 'milk', 'honey', 'dates', 'coconut'],
+        'bitter': ['turmeric', 'neem', 'bitter melon', 'fenugreek'],
+        'pungent': ['chili', 'pepper', 'ginger', 'garlic', 'onion'],
+        'salty': ['salt', 'seaweed'],
+        'sour': ['lemon', 'lime', 'tamarind', 'yogurt', 'vinegar'],
+        'astringent': ['tea', 'pomegranate', 'beans', 'lentils'],
+      };
+
+      const ingredientStr = ingredientsText.toLowerCase();
+      Object.entries(ingredientTasteMap).forEach(([taste, ingredients]) => {
+        if (ingredients.some(ing => ingredientStr.includes(ing)) && !tastes.includes(taste)) {
+          tastes.push(taste);
+        }
+      });
+    }
+
+    // Intelligent fallback: if seasons are empty, deduce from potency
+    if (seasons.length === 0) {
+      log('⚠️  No seasons found, deducing from potency and dosha...');
+      if (potency === 'hot') {
+        seasons = ['spring', 'autumn', 'winter'];
+      } else {
+        seasons = ['summer', 'monsoon'];
+      }
+    }
+
+    log('✨ Parsed recipe:', {
+      title,
+      ingredients: ingredients.length,
+      preparation: preparation.length,
+      primaryDosha,
+      tastes: tastes.length > 0 ? tastes : '(deduced)',
+      potency,
+      seasons: seasons.length > 0 ? seasons : '(deduced)'
+    });
 
     const recipe: Recipe = {
       id: String(Date.now()),
@@ -77,10 +191,11 @@ export const extractTextFromImage = async (file: FileWithPreview): Promise<Recip
       ingredients,
       preparation,
       properties: {
-        primaryDosha: 'vata',
-        taste: [],
-        potency: 'hot',
-        season: [],
+        primaryDosha: primaryDosha as any,
+        taste: tastes as any,
+        potency: potency as 'hot' | 'cold',
+        season: seasons as any,
+        doshaExplanation: doshaExplanationText || undefined,
       },
     };
 

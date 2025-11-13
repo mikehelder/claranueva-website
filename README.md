@@ -1,73 +1,128 @@
-# Welcome to your Lovable project
+[[_TOC_]]
 
-## Project info
+# Ayurvedic Recipe OCR (आयुर्वेद पाकशास्त्र)
 
-**URL**: https://lovable.dev/projects/00222468-bcfa-4651-87fa-bdfe09df5646
+A full-stack web application that digitizes handwritten Ayurvedic recipes using AI-powered OCR and vision capabilities. Upload an image of a handwritten recipe, and the application automatically extracts text, parses ingredients, and generates structured recipe data with Ayurvedic metadata (doshas, tastes, seasons, potency).
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **AI-Powered OCR**: Extracts text from handwritten Sanskrit and English recipe images using Cloudflare's AI vision models
+- **Intelligent Data Parsing**: Automatically identifies ingredients, tastes, thermal properties, and seasonal appropriateness
+- **Smart Deduction**: When recipe data is incomplete, the system intelligently infers missing information based on ingredient analysis and Ayurvedic principles
+- **Recipe Visualization**: Displays extracted recipes with ingredient breakdowns and Ayurvedic metadata (doshas, tastes, seasons, potency)
+- **Responsive UI**: Modern, accessible interface built with React and shadcn-ui
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/00222468-bcfa-4651-87fa-bdfe09df5646) and start prompting.
+**High level overview:**
 
-Changes made via Lovable will be committed automatically to this repo.
+![High-level](docs/diagrams/project_highlevel_overview.png)
 
-**Use your preferred IDE**
+**Frontend:**
+- React + TypeScript
+- Vite (build tool)
+- Tailwind CSS (styling)
+- shadcn-ui (component library)
+- React Router (routing)
+- React Query (data management)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**Backend/AI:**
+- Cloudflare Workers (AI processing)
+- Cloudflare AI Models (vision & multimodal)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Infrastructure:**
+- GitHub Pages (hosting)
+- GitHub Actions (CI/CD deployment)
+- Cloudflare DNS & Pages (domain management)
+- CORS configured for secure worker communication
 
-Follow these steps: 
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ (install with [nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- Bun (optional, for faster dependency management)
+
+### Local Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/mikehelder/claranueva-website.git
+cd claranueva-website
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
+# or with bun
+bun install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Building for Production
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+src/
+├── components/        # React components (uploader, display, visualization)
+├── pages/             # Page components
+├── utils/             # Utilities (text extraction, mock data)
+├── lib/               # Helpers (debug logging)
+├── types/             # TypeScript definitions
+└── hooks/             # Custom React hooks
 
-This project is built with:
+ai-worker/             # Cloudflare Worker for AI processing
+├── index.js           # Worker handler with AI vision prompt
+└── wrangler.toml      # Worker configuration
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Deployment
 
-## How can I deploy this project?
+### Frontend
+The project is automatically deployed to GitHub Pages via GitHub Actions on every push to `main`:
+- Hosted at: `https://www.claranueva.com` (with Cloudflare DNS)
+- Deployment workflow: `.github/workflows/deploy.yml`
 
-Simply open [Lovable](https://lovable.dev/projects/00222468-bcfa-4651-87fa-bdfe09df5646) and click on Share -> Publish.
+### Cloudflare Worker
+Deploy the AI worker to Cloudflare:
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+cd ai-worker
+wrangler deploy
+```
 
-Yes, you can!
+Configure the `ALLOWED_ORIGIN` in `wrangler.toml` to match your deployment URL.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## How It Works
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. **Upload**: User uploads an image of a handwritten Ayurvedic recipe
+2. **Extract**: Frontend sends image to Cloudflare Worker via CORS-enabled request
+3. **Process**: Worker uses AI vision model to extract text and parse recipe structure
+4. **Deduce**: If data is incomplete, the system infers missing fields using ingredient analysis
+5. **Display**: Frontend renders the structured recipe with visual summaries
+
+## Documentation
+
+For detailed information about how the AI worker processes recipes, see **[AI_WORKER_GUIDE.md](docs/references/AI_WORKER_GUIDE.md)**. This document covers:
+- What the worker does and how it processes images
+- The AI prompt structure and deduction strategy
+- Expected response format
+- Configuration and deployment
+- Error handling and troubleshooting
+
+## Configuration
+
+### Environment Variables
+- Create a `.env.local` file or configure via deployment settings
+- Worker CORS origin should match your frontend URL (configured in `ai-worker/wrangler.toml`)
+
+## Contributing
+
+This project was originally prototyped with Lovable and has been enhanced through local development in VS Code. Feel free to submit issues and pull requests!
